@@ -1,0 +1,81 @@
+#!/bin/bash
+# Copyright 2019 Janet Davis CC-BY-NC-SA
+
+# Get assembler test info
+stage=$1
+testno=$2
+test=$3
+maxscore=$4
+descr="Stage $stage, test $testno: $test"
+
+echo "$descr"
+
+# Locate directories and files
+base=$(pwd)
+if [ $GRADESCOPE_DEV ]; then
+    source="$base"
+    python="/anaconda/bin/python3"
+else
+    source="$base/source"
+    python="/usr/bin/python3"
+fi
+
+canonical_assembler="$source/nand2tetris/tools/Assembler.sh"
+
+submission="$base/submission"
+main="$submission/hasm.py"
+student_assembler="$python $main"
+
+asmfile="$submission/$test.asm"
+cmpfile="$submission/$test.cmp" 
+hackfile="$submission/$test.hack"
+
+outfile="$submission/$test.out" 
+stdoutfile="$submission/$test.stdout"
+gradefile="$base/results/$stage-$testno.results.json"
+
+if [ ! -f $main ]; then
+    # Program file not found
+    score=0
+    message="hasm.py not submitted"
+    echo "$message"
+else 
+    # Create comparison file
+    command="$canonical_assembler $asmfile; mv $hackfile $cmpfile"
+    eval $command
+    
+    # Run assembler, redirecting stderr and stdout
+    command="$student_assembler $asmfile &> $stdoutfile"
+    eval $command 
+
+    if [ ! -f $hackfile ]; then
+        # Hack file not generated
+        score=0
+        # Replace " with ' and line breaks with \n to make the JSON formatted correctly.
+        IFS=$'\r\n' GLOBIGNORE='*' command eval 'lines=($(tr "\042" "\047" < $stdoutfile))'
+        len=${#lines[@]}
+        message=""
+        for (( i=0; i<$len; i++ )); do
+            message="$message\n${lines[$i]}"
+        done
+    else
+        # Hack file generated - compare to standard results
+        result=`/usr/bin/diff -q $cmpfile $hackfile`
+        if [[ $result == *differ* ]]; then
+            score=0
+            message="Output differs from the standard assembler"
+        else
+            score=$maxscore
+            message="Output is identical to the standard assembler"
+        fi
+    fi
+fi
+
+cat > $gradefile <<EOF
+	{
+	    "score": $score,
+	    "max_score": $maxscore,
+	    "number": "$descr",
+	    "output": "$message"
+	},
+EOF

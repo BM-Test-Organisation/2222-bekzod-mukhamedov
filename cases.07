@@ -1,0 +1,6 @@
+I   a   StackArithmetic/SimpleAdd   13  -n
+I   b   StackArithmetic/StackTest   13  -n
+II  a   MemoryAccess/TempTest       8   -n
+II  b   MemoryAccess/BasicTest      13  -n
+II  c   MemoryAccess/PointerTest    8   -n
+II  d   MemoryAccess/StaticTest     8   -n
