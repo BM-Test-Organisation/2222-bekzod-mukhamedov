@@ -2,8 +2,8 @@
   "tests": [
     {
       "name": "..",
-      "setup": "..",
-      "run": ".",
+      "setup": "",
+      "run": "./run_autograder",
       "input": "",
       "output": "",
       "comparison": "included",
